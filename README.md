@@ -1,6 +1,6 @@
 # Introduction
 # Get sources
-    git clone --recursive git@gitlab.com:qflow/websockets.git
+    git clone --recursive git@github.com:qflow/websockets.git
 
 # Build
     qbs --recursive websockets
