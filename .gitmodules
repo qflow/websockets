@@ -1,6 +1,6 @@
 [submodule "core"]
 	path = core
-	url = git@gitlab.com:qflow/core.git
+	url = git@github.com:qflow/core.git
 [submodule "qbs"]
 	path = qbs
-	url = git@gitlab.com:qflow/qbs.git
+	url = git@github.com:qflow/qbs.git
