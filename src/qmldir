@@ -1,0 +1,2 @@
+module QFlow.Websockets
+plugin websockets
