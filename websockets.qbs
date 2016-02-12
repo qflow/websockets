@@ -5,7 +5,7 @@ Project
 {
     qbsSearchPaths: "qbs"
     references: [
-            "core/core.qbs",
+            "core/src/src.qbs",
             "src/src.qbs"
     ]
 }
