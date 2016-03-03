@@ -5,6 +5,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QUrl>
+#include <QCoreApplication>
 
 namespace QFlow{
 
@@ -30,11 +31,13 @@ WebSocketWorker::~WebSocketWorker()
 }
 void WebSocketWorker::close()
 {
+    QCoreApplication::processEvents();
     ConnectionState expState = ConnectionState::OPENED;
     if(_state.compare_exchange_strong(expState, ConnectionState::CLOSED))
     {
-        _con->close(websocketpp::close::status::normal, "Web socket disposed by application");
         _socket->close();
+        _con->close(websocketpp::close::status::normal, "Web socket disposed by application");
+        _con = nullptr;
         Q_EMIT closed();
     }
 }
@@ -91,7 +94,7 @@ void WebSocketWorker::clientConnected()
     WebsocketppClient* client = (WebsocketppClient*)_endpoint.data();
     _con = client->get_connection(uri, ec);
     connectHandlers();
-    Q_FOREACH(QString subprotocol, _requestedSubprotocols)
+    for(QString subprotocol: _requestedSubprotocols)
     {
         _con->add_subprotocol(subprotocol.toStdString());
     }
@@ -119,8 +122,6 @@ void WebSocketWorker::on_message(websocketpp::connection_hdl /*hdl*/, message_pt
 }
 void WebSocketWorker::on_close(websocketpp::connection_hdl /*hdl*/)
 {
-    if(_con->is_server()) qDebug() << "Websocket server connection closed";
-    else qDebug() << "Websocket client connection closed";
     ConnectionState opened = ConnectionState::OPENED;
     if(_state.compare_exchange_strong(opened, ConnectionState::CLOSED)) Q_EMIT closed();
 }
@@ -132,8 +133,6 @@ void WebSocketWorker::on_fail(websocketpp::connection_hdl /*hdl*/)
 
 void WebSocketWorker::on_open(websocketpp::connection_hdl /*hdl*/)
 {
-    if(_con->is_server()) qDebug() << "Websocket server connection opened";
-    else qDebug() << "Websocket client connection opened";
     _state.store(ConnectionState::OPENED);
     Q_EMIT opened();
 }
