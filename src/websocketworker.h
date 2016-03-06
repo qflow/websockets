@@ -35,7 +35,7 @@ public:
     QPointer<QTcpSocket> _socket;
     WebSocketConnection* _connection;
     connection_type::ptr _con;
-    QSharedPointer<WebsocketppEndpoint> _endpoint;
+    std::shared_ptr<WebsocketppEndpoint> _endpoint;
     QStringList _requestedSubprotocols;
     QMutex _mutex;
     QWaitCondition _pendingValidation;

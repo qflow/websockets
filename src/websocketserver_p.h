@@ -22,7 +22,7 @@ public:
     void on_message(websocketpp::connection_hdl hdl, message_ptr msg);
     int _port;
     QString _host;
-    QSharedPointer<WebsocketppServer> _server;
+    std::shared_ptr<WebsocketppServer> _server;
     void newConnection(WebSocketConnection* con);
 private:
     WebSocketServer* q_ptr;

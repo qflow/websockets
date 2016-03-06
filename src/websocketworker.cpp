@@ -91,7 +91,7 @@ void WebSocketWorker::clientConnected()
 {
     websocketpp::lib::error_code ec;
     std::string uri = _uri.toStdString();
-    WebsocketppClient* client = (WebsocketppClient*)_endpoint.data();
+    WebsocketppClient* client = (WebsocketppClient*)_endpoint.get();
     _con = client->get_connection(uri, ec);
     connectHandlers();
     for(QString subprotocol: _requestedSubprotocols)
