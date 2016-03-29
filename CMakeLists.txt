@@ -1,0 +1,3 @@
+cmake_minimum_required(VERSION 2.8.11)
+set (CMAKE_PREFIX_PATH "/home/michal/Qt/5.6/gcc_64/lib/cmake")
+add_subdirectory(core/src)
