@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 2.8.11)
-set (CMAKE_PREFIX_PATH "/home/michal/Qt/5.6/gcc_64/lib/cmake")
 project(websockets)
 add_definitions(-DWEBSOCKETS_LIBRARY)
 aux_source_directory(. SRC_LIST)
@@ -10,9 +9,12 @@ set(CMAKE_AUTOMOC ON)
 
 set(QT_MIN_VERSION "5.6.0")
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED Core Qml)
-# Tell CMake to create the helloworld executable
-add_library(websockets SHARED ${SRC_LIST})
+find_package(websocketpp REQUIRED)
+add_library(websockets SHARED ${SRC_LIST} qmldir)
+set_property(TARGET websockets PROPERTY CXX_STANDARD 11)
 add_dependencies(websockets core)
 
-# Use the Widgets module from Qt 5.
 target_link_libraries(websockets core Qt5::Core Qt5::Qml)
+set(WEBSOCKETS_INSTALL_PATH "bin/plugins/websockets")
+install (TARGETS websockets DESTINATION ${WEBSOCKETS_INSTALL_PATH})
+install (FILES qmldir DESTINATION ${WEBSOCKETS_INSTALL_PATH})
