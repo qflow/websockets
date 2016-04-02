@@ -13,7 +13,7 @@ find_package(websocketpp REQUIRED)
 add_library(websockets SHARED ${SRC_LIST} qmldir)
 set_property(TARGET websockets PROPERTY CXX_STANDARD 11)
 add_dependencies(websockets core)
-
+target_include_directories (websockets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(websockets core Qt5::Core Qt5::Qml)
 set(WEBSOCKETS_INSTALL_PATH "bin/plugins/websockets")
 install (TARGETS websockets DESTINATION ${WEBSOCKETS_INSTALL_PATH})
