@@ -61,7 +61,16 @@ void WebSocketServer::setHost(QString value)
 ErrorInfo WebSocketServer::init()
 {
     Q_D(WebSocketServer);
-    d->listen(QHostAddress(d->_host), d->_port);
+    QHostAddress address;
+    if(d->_host.isEmpty() || d->_host.isNull())
+    {
+        address = QHostAddress::Any;
+    }
+    else
+    {
+        address = QHostAddress(d->_host);
+    }
+    d->listen(address, d->_port);
     return ErrorInfo();
 }
 void WebSocketServerPrivate::newConnection(WebSocketConnection *con)
