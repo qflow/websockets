@@ -4,6 +4,7 @@
 #include "websockets_global.h"
 #include <QThread>
 #include <QPointer>
+#include <QAbstractSocket>
 
 class QHostAddress;
 
@@ -26,6 +27,7 @@ public:
     void setUri(const QString& value);
     QString subprotocol() const;
     QHostAddress peerAddress() const;
+    QAbstractSocket::SocketState state() const;
 public Q_SLOTS:
     void connect();
     void sendBinary(const QByteArray& data);

@@ -7,6 +7,12 @@
 #include <QUrl>
 #include <QCoreApplication>
 
+#ifdef Q_OS_LINUX
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
+
 namespace QFlow{
 
 WebSocketWorker::WebSocketWorker(WebSocketConnection* thread) : QObject(), _connection(thread), _accepted(false), _state(ConnectionState::CLOSED)
@@ -84,11 +90,29 @@ void WebSocketWorker::connect()
     _socket = new QTcpSocket(this);
     QUrl url(_uri);
     connectSocketSignals();
+
     _state.store(ConnectionState::CONNECTING);
     _socket->connectToHost(url.host(), url.port());
+
 }
 void WebSocketWorker::clientConnected()
 {
+#ifdef Q_OS_LINUX
+    int enableKeepAlive = 1;
+    int fd = _socket->socketDescriptor();
+    int res = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &enableKeepAlive, sizeof(enableKeepAlive));
+
+    int maxIdle = 10; /* seconds */
+    res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &maxIdle, sizeof(maxIdle));
+
+    int count = 3;  // send up to 3 keepalive packets out, then disconnect if no response
+    res = setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &count, sizeof(count));
+
+    int interval = 2;   // send a keepalive packet out every 2 seconds (after the 5 second idle period)
+    res = setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
+#endif
+
+
     websocketpp::lib::error_code ec;
     std::string uri = _uri.toStdString();
     WebsocketppClient* client = (WebsocketppClient*)_endpoint.get();
@@ -101,6 +125,11 @@ void WebSocketWorker::clientConnected()
 
     client->connect(_con);
 }
+QAbstractSocket::SocketState WebSocketWorker::state() const
+{
+    return _socket->state();
+}
+
 void WebSocketWorker::error(QAbstractSocket::SocketError socketError)
 {
     qDebug() << socketError;

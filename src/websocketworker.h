@@ -52,6 +52,7 @@ public:
     void on_fail(websocketpp::connection_hdl hdl);
     void connectHandlers();
     void connectSocketSignals();
+    QAbstractSocket::SocketState state() const;
 public Q_SLOTS:
     void handleConnection(qintptr socketDescriptor);
     void readyRead();
