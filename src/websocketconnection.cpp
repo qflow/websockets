@@ -41,6 +41,10 @@ void WebSocketConnection::run()
 {
     exec();
 }
+QAbstractSocket::SocketState WebSocketConnection::state() const
+{
+    return _worker->state();
+}
 void WebSocketConnection::handleConnection(qintptr socketDescriptor)
 {
     qRegisterMetaType<qintptr>("qintptr");
