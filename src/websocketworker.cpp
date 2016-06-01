@@ -13,6 +13,12 @@
 #include <netinet/tcp.h>
 #endif
 
+#ifdef Q_OS_WIN
+#include <Winsock2.h>
+#include <ws2tcpip.h>
+#include "mstcpip.h"
+#endif
+
 namespace QFlow{
 
 WebSocketWorker::WebSocketWorker(WebSocketConnection* thread) : QObject(), _connection(thread), _accepted(false), _state(ConnectionState::CLOSED)
@@ -64,12 +70,42 @@ void WebSocketWorker::connectSocketSignals()
     QObject::connect(_socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
     QObject::connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error(QAbstractSocket::SocketError)));
 }
+void setKeepAlive(int socketHandle)
+{
+#ifdef Q_OS_WIN
+    struct tcp_keepalive {
+        u_long  onoff;
+        u_long  keepalivetime;
+        u_long  keepaliveinterval;
+    } alive;
+    alive.onoff = TRUE;
+    alive.keepalivetime = 6000;
+    alive.keepaliveinterval = 3000;
+    DWORD dwBytesRet=0;
+    int res = WSAIoctl(socketHandle, SIO_KEEPALIVE_VALS, &alive, sizeof(alive),
+                NULL, 0, &dwBytesRet, NULL, NULL);
+#endif
+#ifdef Q_OS_LINUX
+    int enableKeepAlive = 1;
+    int res = setsockopt(socketHandle, SOL_SOCKET, SO_KEEPALIVE, &enableKeepAlive, sizeof(enableKeepAlive));
+
+    int maxIdle = 10; /* seconds */
+    res = setsockopt(socketHandle, IPPROTO_TCP, TCP_KEEPIDLE, &maxIdle, sizeof(maxIdle));
+
+    int count = 3;  // send up to 3 keepalive packets out, then disconnect if no response
+    res = setsockopt(socketHandle, SOL_TCP, TCP_KEEPCNT, &count, sizeof(count));
+
+    int interval = 2;   // send a keepalive packet out every 2 seconds (after the 5 second idle period)
+    res = setsockopt(socketHandle, SOL_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
+#endif
+}
 
 void WebSocketWorker::handleConnection(qintptr socketDescriptor)
 {
     _socket = new QTcpSocket(this);
     _socket->setSocketDescriptor(socketDescriptor);
     connectSocketSignals();
+    setKeepAlive(_socket->socketDescriptor());
 }
 void WebSocketWorker::readyRead()
 {
@@ -97,21 +133,7 @@ void WebSocketWorker::connect()
 }
 void WebSocketWorker::clientConnected()
 {
-#ifdef Q_OS_LINUX
-    int enableKeepAlive = 1;
-    int fd = _socket->socketDescriptor();
-    int res = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &enableKeepAlive, sizeof(enableKeepAlive));
-
-    int maxIdle = 10; /* seconds */
-    res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &maxIdle, sizeof(maxIdle));
-
-    int count = 3;  // send up to 3 keepalive packets out, then disconnect if no response
-    res = setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &count, sizeof(count));
-
-    int interval = 2;   // send a keepalive packet out every 2 seconds (after the 5 second idle period)
-    res = setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
-#endif
-
+    setKeepAlive(_socket->socketDescriptor());
 
     websocketpp::lib::error_code ec;
     std::string uri = _uri.toStdString();
