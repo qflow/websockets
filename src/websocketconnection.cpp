@@ -34,7 +34,7 @@ void WebSocketConnection::close()
 void WebSocketConnection::connect()
 {
     start();
-    QMetaObject::invokeMethod(_worker, "connect", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(_worker, "connect", Qt::BlockingQueuedConnection);
 }
 
 void WebSocketConnection::run()
