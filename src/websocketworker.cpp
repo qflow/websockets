@@ -117,7 +117,6 @@ websocketpp::lib::error_code WebSocketWorker::write(websocketpp::connection_hdl,
     qint64 bytesWritten = _socket->write(msg, size);
     if(bytesWritten != (qint64)size)
     {
-        qDebug() << bytesWritten << _socket->errorString() << _socket->isValid() << _socket->state() << _state.load() << QByteArray(msg, size);
         return websocketpp::error::make_error_code(websocketpp::error::invalid_state);
     }
     return websocketpp::lib::error_code();
