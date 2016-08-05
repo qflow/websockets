@@ -1,0 +1,13 @@
+platform:
+  - x64
+configuration:
+  - Release
+environment:
+  QTDIR: C:\Qt\5.7\msvc2015_64
+build:
+  project: websockets.sln
+before_build:
+  - cd c:\projects\websockets
+  - cmake -G "Visual Studio 14 2015 Win64"
+after_build:
+  - dir
