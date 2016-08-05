@@ -4,6 +4,8 @@ configuration:
   - Release
 environment:
   QTDIR: C:\Qt\5.7\msvc2015_64
+install:
+  - git submodule update --init --recursive
 build:
   project: websockets.sln
 before_build:
