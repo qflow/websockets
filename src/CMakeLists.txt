@@ -24,7 +24,7 @@ else()
       CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=install
       TEST_COMMAND ""
     )
-    set(WEBSOCKETPP_INCLUDE_DIRS ${PROJECT_BINARY_DIR}/websocketpp/src/websocketpp-build/install/include)
+    set(WEBSOCKETPP_INCLUDE_DIRS ${PROJECT_BINARY_DIR}/websocketpp/src/websocketpp-build/install/include ${PROJECT_BINARY_DIR}/websocketpp/src/websocketpp/install/include)
     message(STATUS "Websocketpp: " ${WEBSOCKETPP_INCLUDE_DIRS})
     if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set(WEBSOCKETPP_LIBRARIES ${WEBSOCKETPP_LIBRARIES} ws2_32)
