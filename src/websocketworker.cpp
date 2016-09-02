@@ -162,6 +162,7 @@ void WebSocketWorker::error(QAbstractSocket::SocketError socketError)
 }
 void WebSocketWorker::disconnected()
 {
+    qDebug() << "disconnected";
     ConnectionState opened = ConnectionState::OPENED;
     if(_state.compare_exchange_strong(opened, ConnectionState::CLOSED)) Q_EMIT closed();
 }
