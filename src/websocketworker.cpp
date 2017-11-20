@@ -7,7 +7,7 @@
 #include <QUrl>
 #include <QCoreApplication>
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) | defined(Q_OS_MACOS)
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -97,6 +97,15 @@ void setKeepAlive(int socketHandle)
 
     int interval = 2;   // send a keepalive packet out every 2 seconds (after the 5 second idle period)
     res = setsockopt(socketHandle, SOL_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
+#endif
+#ifdef Q_OS_MACOS
+	
+	int enableKeepAlive = 1;
+	int res = setsockopt(socketHandle, SOL_SOCKET, SO_KEEPALIVE, &enableKeepAlive, sizeof(enableKeepAlive));
+	
+	int maxIdle = 10; /* seconds */
+	res = setsockopt(socketHandle, IPPROTO_TCP, TCP_KEEPALIVE, &maxIdle, sizeof(maxIdle));
+	
 #endif
 }
 
