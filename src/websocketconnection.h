@@ -44,7 +44,7 @@ Q_SIGNALS:
     void subprotocolChanged();
 private:
     void run();
-    QPointer<WebSocketWorker> _worker;
+    WebSocketWorker* _worker;
 };
 }
 #endif // WEBSOCKETCONNECTION_H

@@ -6,6 +6,7 @@
 #include <websocketpp/server.hpp>
 #include <websocketpp/client.hpp>
 #include <QWaitCondition>
+#include <QSharedPointer>
 #include <QMutex>
 #include <atomic>
 #include <QTcpSocket>
@@ -35,7 +36,7 @@ public:
     QPointer<QTcpSocket> _socket;
     WebSocketConnection* _connection;
     connection_type::ptr _con;
-    std::shared_ptr<WebsocketppEndpoint> _endpoint;
+    QSharedPointer<WebsocketppEndpoint> _endpoint;
     QStringList _requestedSubprotocols;
     QMutex _mutex;
     QWaitCondition _pendingValidation;
@@ -52,6 +53,7 @@ public:
     void on_fail(websocketpp::connection_hdl hdl);
     void connectHandlers();
     void connectSocketSignals();
+    void disconnectSocketSignals();
     QAbstractSocket::SocketState state() const;
 public Q_SLOTS:
     void handleConnection(qintptr socketDescriptor);

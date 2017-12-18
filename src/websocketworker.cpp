@@ -47,9 +47,13 @@ void WebSocketWorker::close()
     ConnectionState expState = ConnectionState::OPENED;
     if(_state.compare_exchange_strong(expState, ConnectionState::CLOSED))
     {
-        _socket->close();
+        disconnectSocketSignals();
         _con->close(websocketpp::close::status::normal, "Web socket disposed by application");
         _con = nullptr;
+        _socket->deleteLater();
+        _socket = nullptr;
+        _endpoint.reset(new WebsocketppClient());
+        _endpoint->clear_access_channels(websocketpp::log::alevel::all);
         Q_EMIT closed();
     }
 }
@@ -69,6 +73,13 @@ void WebSocketWorker::connectSocketSignals()
     QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
     QObject::connect(_socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
     QObject::connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error(QAbstractSocket::SocketError)));
+}
+void WebSocketWorker::disconnectSocketSignals()
+{
+    QObject::disconnect(_socket, SIGNAL(connected()), this, SLOT(clientConnected()));
+    QObject::disconnect(_socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
+    QObject::disconnect(_socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
+    QObject::disconnect(_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error(QAbstractSocket::SocketError)));
 }
 void setKeepAlive(int socketHandle)
 {
@@ -123,12 +134,19 @@ void WebSocketWorker::readyRead()
 }
 websocketpp::lib::error_code WebSocketWorker::write(websocketpp::connection_hdl, char const * msg, size_t size)
 {
-    qint64 bytesWritten = _socket->write(msg, size);
-    if(bytesWritten != (qint64)size)
+    if (_socket->isOpen())
     {
-        return websocketpp::error::make_error_code(websocketpp::error::invalid_state);
+    	qint64 bytesWritten = _socket->write(msg, size);
+        if(bytesWritten != (qint64)size)
+        {
+            return websocketpp::error::make_error_code(websocketpp::error::invalid_state);
+        }
+        return websocketpp::lib::error_code();
     }
-    return websocketpp::lib::error_code();
+    else
+    {
+        return websocketpp::error::make_error_code(websocketpp::error::bad_connection);
+    }
 }
 void WebSocketWorker::connect()
 {
@@ -137,7 +155,12 @@ void WebSocketWorker::connect()
     connectSocketSignals();
 
     _state.store(ConnectionState::CONNECTING);
-    _socket->connectToHost(url.host(), url.port());
+	int defaultPort = 80;
+	if (url.scheme() == "wss")
+	{
+		defaultPort = 443;
+	}
+    _socket->connectToHost(url.host(), url.port(defaultPort));
 
 }
 void WebSocketWorker::clientConnected()
@@ -146,7 +169,7 @@ void WebSocketWorker::clientConnected()
 
     websocketpp::lib::error_code ec;
     std::string uri = _uri.toStdString();
-    WebsocketppClient* client = (WebsocketppClient*)_endpoint.get();
+    WebsocketppClient* client = (WebsocketppClient*)_endpoint.data();
     _con = client->get_connection(uri, ec);
     connectHandlers();
     for(QString subprotocol: _requestedSubprotocols)
@@ -158,7 +181,7 @@ void WebSocketWorker::clientConnected()
 }
 QAbstractSocket::SocketState WebSocketWorker::state() const
 {
-    return _socket->state();
+	return !_socket.isNull() ? _socket->state() : QAbstractSocket::UnconnectedState;
 }
 
 void WebSocketWorker::error(QAbstractSocket::SocketError socketError)
@@ -218,7 +241,15 @@ bool WebSocketWorker::on_validate(websocketpp::connection_hdl hdl)
 }
 void WebSocketWorker::sendText(const QString &msg)
 {
-    _con->send(msg.toStdString(), websocketpp::frame::opcode::text);
+    ConnectionState state = _state.load();
+    if(state != ConnectionState::OPENED)
+    {
+        qDebug() << "FATAL: connection not in opened state";
+    }
+    else
+    {
+        _con->send(msg.toStdString(), websocketpp::frame::opcode::text);
+    }
 }
 void WebSocketWorker::sendBinary(const QByteArray& data)
 {
@@ -227,6 +258,9 @@ void WebSocketWorker::sendBinary(const QByteArray& data)
     {
         qDebug() << "FATAL: connection not in opened state";
     }
-    _con->send(data.toStdString(), websocketpp::frame::opcode::binary);
+    else
+    {
+        _con->send(data.toStdString(), websocketpp::frame::opcode::binary);
+    }
 }
 }
