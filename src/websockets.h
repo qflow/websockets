@@ -10,7 +10,7 @@ namespace QFlow{
 class Websockets: public QQmlExtensionPlugin
 {
         Q_OBJECT
-        Q_PLUGIN_METADATA(IID "Wamp" FILE "websockets_metadata.json")
+        Q_PLUGIN_METADATA(IID "Websockets" FILE "websockets_metadata.json")
 public:
         void registerTypes(const char *uri);
 };

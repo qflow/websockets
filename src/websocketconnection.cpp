@@ -9,9 +9,9 @@ namespace QFlow{
 WebSocketConnection::WebSocketConnection(QObject* parent) : QThread(parent), _worker(new WebSocketWorker(this))
 {
     _worker->moveToThread(this);
-    QObject::connect(_worker, SIGNAL(opened()), this, SIGNAL(opened()));
-    QObject::connect(_worker, SIGNAL(closed()), this, SIGNAL(closed()));
-    QObject::connect(_worker, SIGNAL(messageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
+	QObject::connect(_worker, &WebSocketWorker::opened, this, &WebSocketConnection::opened);
+    QObject::connect(_worker, &WebSocketWorker::closed, this, &WebSocketConnection::closed);
+    QObject::connect(_worker, &WebSocketWorker::messageReceived, this, &WebSocketConnection::messageReceived);
     WebSocketServerPrivate* wsp = static_cast<WebSocketServerPrivate*>(parent);
     if(wsp)
     {
